@@ -63,6 +63,9 @@
 #include "magic_enum/magic_enum.hpp"
 #include "jpeg_decoder.h"
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
+
 #define STREAM_NAME(sip)                                                                       \
   (static_cast<std::ostringstream&&>(std::ostringstream()                                      \
                                      << _stream_name[sip.first]                                \
@@ -159,6 +162,10 @@ class OBCameraNode {
   void getParameters();
 
   void setupTopics();
+
+  void setupDiagnosticUpdater();
+
+  void onTemperatureUpdate(diagnostic_updater::DiagnosticStatusWrapper& status);
 
   void setupPipelineConfig();
 
@@ -459,5 +466,7 @@ class OBCameraNode {
   bool enable_depth_scale_ = true;
   bool is_openni_device_ = false;
   std::string align_mode_ = "HW";
+  std::unique_ptr<diagnostic_updater::Updater> diagnostic_updater_ = nullptr;
+  double diagnostic_period_ = 1.0;
 };
 }  // namespace orbbec_camera
