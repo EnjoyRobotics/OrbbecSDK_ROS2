@@ -978,6 +978,7 @@ void OBCameraNode::getParameters() {
   if (!depth_filter_config_.empty()) {
     enable_depth_filter_ = true;
   }
+  setAndGetNodeParameter(depth_border_clip_, "depth_border_clip", 0);
   setAndGetNodeParameter(enable_frame_sync_, "enable_frame_sync", false);
   setAndGetNodeParameter(enable_color_auto_exposure_, "enable_color_auto_exposure", true);
   setAndGetNodeParameter(enable_color_auto_white_balance_, "enable_color_auto_white_balance", true);
@@ -1347,6 +1348,7 @@ void OBCameraNode::publishDepthPointCloud(const std::shared_ptr<ob::FrameSet> &f
     RCLCPP_ERROR_STREAM(logger_, "depth frame is null");
     return;
   }
+
   CHECK_NOTNULL(pipeline_);
   auto camera_params = pipeline_->getCameraParam();
   if (depth_registration_) {
@@ -1365,6 +1367,24 @@ void OBCameraNode::publishDepthPointCloud(const std::shared_ptr<ob::FrameSet> &f
   auto *points = static_cast<OBPoint *>(result_frame->data());
   auto width = depth_frame->width();
   auto height = depth_frame->height();
+
+
+  // Mask out noisy border pixels with 0 value
+  if (depth_border_clip_ > 0) {
+    for (int i = 0; i < depth_border_clip_; i++) {
+      for (unsigned int j = 0; j < height; j++) {
+        points[j * width + i] = OBPoint();
+        points[j * width + width - i - 1] = OBPoint();
+      }
+      for (unsigned int j = 0; j < width; j++) {
+        points[j + i * width] = OBPoint();
+        points[j + (height - i - 1) * width] = OBPoint();
+      }
+    }
+  }
+
+
+
   auto point_cloud_msg = std::make_unique<sensor_msgs::msg::PointCloud2>();
   sensor_msgs::PointCloud2Modifier modifier(*point_cloud_msg);
   modifier.setPointCloud2FieldsByString(1, "xyz");
