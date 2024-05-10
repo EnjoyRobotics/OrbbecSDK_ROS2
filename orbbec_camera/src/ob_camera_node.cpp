@@ -586,6 +586,7 @@ void OBCameraNode::getParameters() {
   if (!depth_filter_config_.empty()) {
     enable_depth_filter_ = true;
   }
+  setAndGetNodeParameter(depth_border_clip_, "depth_border_clip", 0);
   setAndGetNodeParameter(enable_frame_sync_, "enable_frame_sync", false);
   setAndGetNodeParameter(enable_color_auto_exposure_, "enable_color_auto_exposure", true);
   setAndGetNodeParameter(enable_ir_auto_exposure_, "enable_ir_auto_exposure", true);
@@ -805,10 +806,25 @@ void OBCameraNode::publishDepthPointCloud(const std::shared_ptr<ob::FrameSet> &f
     }
   }
 
-  const auto *depth_data = (uint16_t *)depth_frame->data();
+  auto * depth_data = (uint16_t *)depth_frame->data();
   if (depth_data == nullptr) {
     return;
   }
+
+  // Mask out noisy border pixels with 0 value
+  if (depth_border_clip_ > 0) {
+    for (int i = 0; i < depth_border_clip_; i++) {
+      for (unsigned int j = 0; j < height; j++) {
+        depth_data[j * width + i] = 0;
+        depth_data[j * width + width - i - 1] = 0;
+      }
+      for (unsigned int j = 0; j < width; j++) {
+        depth_data[j + i * width] = 0;
+        depth_data[j + (height - i - 1) * width] = 0;
+      }
+    }
+  }
+
 
   uint32_t pointcloudSize = width * height * sizeof(OBPoint3f);
   uint8_t * pointcloudData = new uint8_t[pointcloudSize];

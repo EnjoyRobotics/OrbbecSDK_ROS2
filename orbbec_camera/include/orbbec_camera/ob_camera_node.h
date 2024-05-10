@@ -419,6 +419,7 @@ class OBCameraNode {
   std::string depth_filter_config_;
   bool enable_depth_filter_ = false;
   bool enable_soft_filter_ = true;
+  int depth_border_clip_ = 0;
   bool enable_color_auto_exposure_ = true;
   bool enable_ir_auto_exposure_ = true;
   bool enable_ir_long_exposure_ = false;
