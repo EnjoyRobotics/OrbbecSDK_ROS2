@@ -576,6 +576,8 @@ void OBCameraNode::getParameters() {
   setAndGetNodeParameter(enable_point_cloud_, "enable_point_cloud", true);
   setAndGetNodeParameter<std::string>(ir_info_url_, "ir_info_url", "");
   setAndGetNodeParameter<std::string>(color_info_url_, "color_info_url", "");
+  setAndGetNodeParameter<std::vector<double>>(color_intrinsics_, "color_intrinsics", {});
+  setAndGetNodeParameter<std::vector<double>>(color_distortion_, "color_distortion", {});
   setAndGetNodeParameter(enable_colored_point_cloud_, "enable_colored_point_cloud", false);
   setAndGetNodeParameter(enable_point_cloud_, "enable_point_cloud", true);
   setAndGetNodeParameter<std::string>(point_cloud_qos_, "point_cloud_qos", "default");
@@ -1214,6 +1216,29 @@ void OBCameraNode::onNewFrameCallback(const std::shared_ptr<ob::Frame> &frame,
   std::string frame_id =
       depth_registration_ ? depth_aligned_frame_id_[stream_index] : optical_frame_id_[stream_index];
   auto camera_info = convertToCameraInfo(intrinsic, distortion, width);
+  
+  if (!color_intrinsics_.empty() && stream_index == COLOR) {
+    camera_info.k[0] = color_intrinsics_[0];
+    camera_info.k[2] = color_intrinsics_[2];
+    camera_info.k[4] = color_intrinsics_[4];
+    camera_info.k[5] = color_intrinsics_[5];
+
+    camera_info.p[0] = color_intrinsics_[0];
+    camera_info.p[2] = color_intrinsics_[2];
+    camera_info.p[5] = color_intrinsics_[4];
+    camera_info.p[6] = color_intrinsics_[5];
+  }
+  if (!color_distortion_.empty() && stream_index == COLOR) {
+    camera_info.d[0] = color_distortion_[0];
+    camera_info.d[1] = color_distortion_[1];
+    camera_info.d[2] = color_distortion_[2];
+    camera_info.d[3] = color_distortion_[3];
+    camera_info.d[4] = color_distortion_[4];
+    camera_info.d[5] = color_distortion_[5];
+    camera_info.d[6] = color_distortion_[6];
+    camera_info.d[7] = color_distortion_[7];
+  }
+  
   camera_info.header.stamp = timestamp;
   camera_info.header.frame_id = frame_id;
   camera_info.width = width;

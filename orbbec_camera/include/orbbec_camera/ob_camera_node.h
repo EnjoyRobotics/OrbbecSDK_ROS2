@@ -402,6 +402,7 @@ class OBCameraNode {
   std::unique_ptr<camera_info_manager::CameraInfoManager> ir_info_manager_ = nullptr;
   std::unique_ptr<camera_info_manager::CameraInfoManager> color_info_manager_ = nullptr;
   std::string color_info_url_;
+  std::vector<double> color_intrinsics_, color_distortion_;
   std::string ir_info_url_;
   std::optional<OBCameraParam> camera_param_;
   std::optional<OBCalibrationParam> calibration_param_;
