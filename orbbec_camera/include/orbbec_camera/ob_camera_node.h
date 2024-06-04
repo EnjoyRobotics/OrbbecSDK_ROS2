@@ -165,6 +165,8 @@ class OBCameraNode {
 
   void setupDiagnosticUpdater();
 
+  void loadColorCalibrationParams(const std::string & file_path);
+
   void onTemperatureUpdate(diagnostic_updater::DiagnosticStatusWrapper& status);
 
   void setupPipelineConfig();
@@ -403,6 +405,7 @@ class OBCameraNode {
   std::unique_ptr<camera_info_manager::CameraInfoManager> color_info_manager_ = nullptr;
   std::string color_info_url_;
   std::vector<double> color_intrinsics_, color_distortion_;
+  std::string color_calibration_file_;
   std::string ir_info_url_;
   std::optional<OBCameraParam> camera_param_;
   std::optional<OBCalibrationParam> calibration_param_;

@@ -28,6 +28,7 @@
   <depend>tf2_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>diagnostic_msgs</depend>
+  <depend>yaml_cpp_vendor</depend>
   <export>
     <build_type>ament_cmake</build_type>
   </export>

@@ -18,6 +18,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <thread>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include "yaml-cpp/yaml.h"
 
 #include "orbbec_camera/utils.h"
 #include <filesystem>
@@ -576,8 +577,7 @@ void OBCameraNode::getParameters() {
   setAndGetNodeParameter(enable_point_cloud_, "enable_point_cloud", true);
   setAndGetNodeParameter<std::string>(ir_info_url_, "ir_info_url", "");
   setAndGetNodeParameter<std::string>(color_info_url_, "color_info_url", "");
-  setAndGetNodeParameter<std::vector<double>>(color_intrinsics_, "color_intrinsics", {});
-  setAndGetNodeParameter<std::vector<double>>(color_distortion_, "color_distortion", {});
+  setAndGetNodeParameter<std::string>(color_calibration_file_, "color_calibration_file", "");
   setAndGetNodeParameter(enable_colored_point_cloud_, "enable_colored_point_cloud", false);
   setAndGetNodeParameter(enable_point_cloud_, "enable_point_cloud", true);
   setAndGetNodeParameter<std::string>(point_cloud_qos_, "point_cloud_qos", "default");
@@ -628,6 +628,9 @@ void OBCameraNode::getParameters() {
 
 void OBCameraNode::setupTopics() {
   getParameters();
+  if (!color_calibration_file_.empty()) {
+    loadColorCalibrationParams(color_calibration_file_);
+  }
   setupDevices();
   setupProfiles();
   setupCameraCtrlServices();
@@ -650,7 +653,48 @@ void OBCameraNode::setupDiagnosticUpdater() {
   diagnostic_updater_->add("Temperature", this, &OBCameraNode::onTemperatureUpdate);
 }
 
-void OBCameraNode::onTemperatureUpdate(diagnostic_updater::DiagnosticStatusWrapper &status) {
+void OBCameraNode::loadColorCalibrationParams(const std::string & file_path)
+{
+  try {
+    YAML::Node doc = YAML::LoadFile(file_path);
+
+    // load color intrinsic
+    if (doc["camera_matrix"] && doc["camera_matrix"]["data"]) {
+      auto camera_matrix = doc["camera_matrix"]["data"];
+      color_intrinsics_.reserve(9);
+      for (int i = 0; i < 9; i++) {
+        color_intrinsics_.push_back(camera_matrix[i].as<double>());
+      }
+      RCLCPP_INFO_STREAM(logger_, "Camera matrix loaded from file " << file_path);
+    }
+
+    // load color distortion
+    if (doc["distortion_coefficients"] && doc["distortion_coefficients"]["data"]) {
+      auto distortion = doc["distortion_coefficients"]["data"];
+      color_distortion_.reserve(8);
+      for (int i = 0; i < 8; i++) {
+        color_distortion_.push_back(distortion[i].as<double>());
+      }
+      RCLCPP_INFO_STREAM(
+        logger_, "Distortion coefficients loaded from file " << file_path);
+    }
+  } catch (YAML::Exception & e) {
+    RCLCPP_ERROR_STREAM(
+      logger_,
+      "[ERROR] [map_io]: Failed processing YAML file " << file_path << " at position (" <<
+        e.mark.line << ":" << e.mark.column << ") for reason: " << e.what() << std::endl);
+    return;
+  } catch (std::exception & e) {
+    RCLCPP_ERROR_STREAM(
+      logger_,
+      "[ERROR] [map_io]: Failed to parse map YAML loaded from file " << file_path <<
+        " for reason: " << e.what() << std::endl);
+    return;
+  }
+}
+
+void OBCameraNode::onTemperatureUpdate(diagnostic_updater::DiagnosticStatusWrapper & status)
+{
   try {
     OBDeviceTemperature temperature;
     uint32_t data_size = sizeof(OBDeviceTemperature);

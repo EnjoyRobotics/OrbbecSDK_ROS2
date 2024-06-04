@@ -41,6 +41,7 @@ set(dependencies
   Threads
   diagnostic_updater
   diagnostic_msgs
+  yaml_cpp_vendor
 )
 
 foreach (dep IN LISTS dependencies)
