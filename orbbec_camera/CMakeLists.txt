@@ -48,6 +48,7 @@ set(dependencies
   diagnostic_updater
   diagnostic_msgs
   statistics_msgs
+  yaml_cpp_vendor
 )
 
 foreach (dep IN LISTS dependencies)
