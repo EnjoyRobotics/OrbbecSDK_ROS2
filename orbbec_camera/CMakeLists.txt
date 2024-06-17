@@ -49,6 +49,7 @@ set(dependencies
   diagnostic_msgs
   statistics_msgs
   backward_ros
+  yaml_cpp_vendor
 )
 
 foreach (dep IN LISTS dependencies)
