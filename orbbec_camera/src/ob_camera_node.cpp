@@ -2563,4 +2563,22 @@ orbbec_camera_msgs::msg::IMUInfo OBCameraNode::createIMUInfo(
   return imu_info;
 }
 
+// Try setting enable_laser_ on legacy devices (like Gemini 2)
+void OBCameraNode::applyLegacyEnableLaserParam() {
+
+  if (!device_->isPropertySupported(OB_PROP_LASER_BOOL, OB_PERMISSION_READ_WRITE))
+    return;
+
+  RCLCPP_INFO(logger_, "Setting laser property on legacy device");
+  try {
+    device_->setBoolProperty(OB_PROP_LASER_BOOL, enable_laser_);
+  } catch (const ob::Error& e) {
+    RCLCPP_ERROR_STREAM(logger_, "Failed to set laser property: " << e.getMessage());
+  } catch (const std::exception& e) {
+    RCLCPP_ERROR_STREAM(logger_, "Failed to set laser property: " << e.what());
+  } catch (...) {
+    RCLCPP_ERROR(logger_, "Failed to set laser property: unknown error");
+  }
+}
+
 }  // namespace orbbec_camera

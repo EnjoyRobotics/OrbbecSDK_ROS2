@@ -151,6 +151,8 @@ class OBCameraNode {
 
   void startIMU();
 
+  void applyLegacyEnableLaserParam();
+
  private:
   struct IMUData {
     IMUData() = default;

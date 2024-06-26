@@ -314,6 +314,7 @@ void OBCameraNodeDriver::initializeDevice(const std::shared_ptr<ob::Device> &dev
   ob_camera_node_ = std::make_unique<OBCameraNode>(this, device_, parameters_);
   ob_camera_node_->startIMU();
   ob_camera_node_->startStreams();
+  ob_camera_node_->applyLegacyEnableLaserParam();
   device_connected_ = true;
   device_info_ = device_->getDeviceInfo();
   serial_number_ = device_info_->serialNumber();
