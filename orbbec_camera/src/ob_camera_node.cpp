@@ -1655,7 +1655,7 @@ void OBCameraNode::onNewFrameCallback(const std::shared_ptr<ob::Frame> &frame,
   std::string frame_id =
       depth_registration_ ? depth_aligned_frame_id_[stream_index] : optical_frame_id_[stream_index];
   auto camera_info = convertToCameraInfo(intrinsic, distortion, width);
-  
+
   if (!color_intrinsics_.empty() && stream_index == COLOR) {
     camera_info.k[0] = color_intrinsics_[0];
     camera_info.k[2] = color_intrinsics_[2];
@@ -1677,7 +1677,7 @@ void OBCameraNode::onNewFrameCallback(const std::shared_ptr<ob::Frame> &frame,
     camera_info.d[6] = color_distortion_[6];
     camera_info.d[7] = color_distortion_[7];
   }
-  
+
   camera_info.header.stamp = timestamp;
   camera_info.header.frame_id = frame_id;
   camera_info.width = width;
@@ -2290,6 +2290,24 @@ orbbec_camera_msgs::msg::IMUInfo OBCameraNode::createIMUInfo(
   }
 
   return imu_info;
+}
+
+// Try setting enable_laser_ on legacy devices (like Gemini 2)
+void OBCameraNode::applyLegacyEnableLaserParam() {
+
+  if (!device_->isPropertySupported(OB_PROP_LASER_BOOL, OB_PERMISSION_READ_WRITE))
+    return;
+
+  RCLCPP_INFO(logger_, "Setting laser property on legacy device");
+  try {
+    device_->setBoolProperty(OB_PROP_LASER_BOOL, enable_laser_);
+  } catch (const ob::Error& e) {
+    RCLCPP_ERROR_STREAM(logger_, "Failed to set laser property: " << e.getMessage());
+  } catch (const std::exception& e) {
+    RCLCPP_ERROR_STREAM(logger_, "Failed to set laser property: " << e.what());
+  } catch (...) {
+    RCLCPP_ERROR(logger_, "Failed to set laser property: unknown error");
+  }
 }
 
 }  // namespace orbbec_camera
